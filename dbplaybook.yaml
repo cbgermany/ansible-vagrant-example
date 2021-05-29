@@ -1,0 +1,70 @@
+---
+- hosts: db
+  become: yes
+
+  tasks:
+  - name: Ensure Chrony (for time synchronisation) is installed
+    yum:
+      name: chrony
+      state: present
+
+  - name: Ensure that chrony is running.
+    service:
+      name: chronyd
+      state: started
+      enabled: yes
+  
+  - name: Ensure that MariaDB is installed
+    yum:
+      name: mariadb-server
+      state: present
+
+  - name: Ensure that MariaDb is started
+    service:
+      name: mariadb
+      state: started
+      enabled: yes
+
+  - name: Ensure that firewalld is installed
+    yum:
+      name: firewalld
+      state: present
+
+  - name: Ensure that firewalld is started
+    service:
+      name: firewalld
+      state: started
+      enabled: yes
+
+  - name: Configure database zone for firewalld
+    firewalld:
+      zone: database
+      state: present
+      permanent: yes
+
+  - name: Allow access to server from test servers
+    firewalld:
+      source: 192.168.60.0/24
+      zone: database
+      state: enabled
+      permanent: yes
+
+  - name: Only allow access on port 3306 to database
+    firewalld:
+      port: 3306/tcp
+      zone: database
+      state: enabled
+      permanent: yes
+
+  - name: Install Python3-pYMySQL
+    yum:
+      name: python3-PyMySQL
+      state: present
+
+  - name: Add mysql_user django
+    mysql_user:
+      name: django
+      host: '%'
+      password: '12345'
+      priv: '*.*:ALL'
+      state: present 
